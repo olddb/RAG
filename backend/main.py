@@ -7,20 +7,39 @@ from pydantic import BaseModel
 from embeddings import EMBED_MODEL, embed
 from retrieval import get_top_k
 from store import STORE_PATH, load_store, save_chunks
+from generation import generate_answer
 
 app = FastAPI()
 
 # Upload files
 
 def extract_text(pdf_bytes: bytes) -> str:
-    # UploadFile is not a full file-like object for pypdf (seek signature differs)
     reader = PdfReader(io.BytesIO(pdf_bytes))
     return "\n".join([page.extract_text() or "" for page in reader.pages])
 
 def chunk_text(text, size=500, overlap=100):
     chunks = []
+    chunk_index = 0
     for i in range(0, len(text), size - overlap):
-        chunks.append(text[i:i+size])
+        end = min(i + size, len(text))
+        chunk_content = text[i:end]
+        
+        if not chunk_content.strip():
+            continue
+        
+        line_start = text[:i].count("\n")
+        line_end = text[:end].count("\n")
+        
+        chunks.append({
+            "text": chunk_content,
+            "start_pos": i,
+            "end_pos": end,
+            "line_start": line_start,
+            "line_end": line_end,
+            "chunk_index": chunk_index,
+        })
+        chunk_index += 1
+    
     return chunks
 
 @app.post("/upload")
@@ -28,13 +47,18 @@ async def upload_file(file: UploadFile = File(...)):
     pdf_bytes = await file.read()
     text = extract_text(pdf_bytes)
     text_chunks = chunk_text(text)
-    # One embedding per chunk via Ollama (nomic-embed-text)
     stored = []
-    for piece in text_chunks:
-        if not piece.strip():
-            continue
-        vector = await embed(piece)
-        stored.append({"text": piece, "embedding": vector})
+    for chunk in text_chunks:
+        vector = await embed(chunk["text"])
+        stored.append({
+            "text": chunk["text"],
+            "embedding": vector,
+            "start_pos": chunk["start_pos"],
+            "end_pos": chunk["end_pos"],
+            "line_start": chunk["line_start"],
+            "line_end": chunk["line_end"],
+            "chunk_index": chunk["chunk_index"],
+        })
     save_chunks(stored, source_filename=file.filename or "upload.bin", embedding_model=EMBED_MODEL)
     return {
         "filename": file.filename,
@@ -72,9 +96,23 @@ async def query(body: QueryBody):
         return {"error": "No data stored"}
     query_vec = await embed(body.question)
     top = get_top_k(query_vec, data["chunks"], k=3)
-    # Omit raw embeddings from the HTTP response (large); keep scores + text for debugging
-    retrieved = [{"score": score, "text": chunk["text"]} for score, chunk in top]
-    return {"question": body.question, "retrieved": retrieved}
+    retrieved = [{
+        "score": score,
+        "text": chunk["text"],
+        "line_start": chunk.get("line_start", 0),
+        "line_end": chunk.get("line_end", 0),
+        "chunk_index": chunk.get("chunk_index", -1),
+        "source_filename": data["source_filename"],
+    } for score, chunk in top]
+    
+    answer = await generate_answer(body.question, retrieved)
+    
+    return {
+        "question": body.question,
+        "retrieved": retrieved,
+        "answer": answer,
+        "source_filename": data["source_filename"],
+    }
 
 # Base API
 

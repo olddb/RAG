@@ -1,59 +1,60 @@
-# RAG — Retrieval-Augmented Generation (backend)
+# RAG — Retrieval-Augmented Generation
 
-Backend FastAPI minimaliste qui permet d'uploader un PDF, de l'indexer via des embeddings Ollama, puis d'interroger le document par similarité cosinus.
+Minimalist FastAPI backend for uploading PDFs, indexing them via Ollama embeddings, and querying documents using cosine similarity retrieval.
 
 ## Architecture
 
 ```
 POST /upload   →  extract text → chunk → embed (Ollama) → store.json
-POST /query    →  embed question → cosine similarity → top-3 chunks
-GET  /store    →  metadata du store (sans les vecteurs)
+POST /query    →  embed question → cosine similarity → top-3 chunks + generate answer
+GET  /store    →  store metadata (without vectors)
 ```
 
-Les embeddings sont produits localement par Ollama (`nomic-embed-text` par défaut). Aucun appel vers un service cloud n'est effectué.
+Embeddings are generated locally by Ollama (`nomic-embed-text` by default). No calls to external APIs are made.
 
-## Prérequis
+## Prerequisites
 
 - Python 3.12+
-- [Ollama](https://ollama.com) installé et en cours d'exécution (`ollama serve`)
-- Le modèle d'embeddings disponible localement :
+- [Ollama](https://ollama.com) installed and running (`ollama serve`)
+- Required models available locally:
 
 ```bash
 ollama pull nomic-embed-text
+ollama pull mistral
 ```
 
 ## Installation
 
-Depuis la racine du projet :
+From the project root:
 
 ```bash
-cd rag/backend
+cd RAG/backend
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Lancer le serveur
+## Starting the server
 
 ```bash
 source venv/bin/activate
 fastapi dev main.py
 ```
 
-L'API est disponible sur http://127.0.0.1:8000 et la documentation interactive sur http://127.0.0.1:8000/docs.
+The API is available at http://127.0.0.1:8000 and interactive documentation at http://127.0.0.1:8000/docs.
 
 ## Endpoints
 
 ### `POST /upload`
 
-Uploade un fichier PDF, le découpe en chunks de 500 caractères (overlap 100), et génère un embedding par chunk via Ollama.
+Upload a PDF file, split it into 500-character chunks (100-character overlap), and generate embeddings for each chunk via Ollama.
 
 ```bash
 curl -X POST http://127.0.0.1:8000/upload \
   -F "file=@document.pdf"
 ```
 
-Réponse :
+Response:
 
 ```json
 {
@@ -66,7 +67,7 @@ Réponse :
 
 ### `POST /query`
 
-Pose une question en langage naturel. Le backend embed la question avec le même modèle, puis retourne les 3 chunks les plus proches par similarité cosinus.
+Ask a question in natural language. The backend embeds the question and returns the 3 most relevant chunks by cosine similarity, plus a generated answer using Mistral.
 
 ```bash
 curl -X POST http://127.0.0.1:8000/query \
@@ -74,28 +75,37 @@ curl -X POST http://127.0.0.1:8000/query \
   -d '{"question": "What is the main topic of this document?"}'
 ```
 
-Réponse :
+Response:
 
 ```json
 {
   "question": "What is the main topic of this document?",
   "retrieved": [
-    { "score": 0.91, "text": "..." },
+    {
+      "score": 0.91,
+      "text": "...",
+      "line_start": 10,
+      "line_end": 15,
+      "chunk_index": 2,
+      "source_filename": "document.pdf"
+    },
     { "score": 0.87, "text": "..." },
     { "score": 0.83, "text": "..." }
-  ]
+  ],
+  "answer": "Based on the provided documents, the main topic is...",
+  "source_filename": "document.pdf"
 }
 ```
 
 ### `GET /store`
 
-Retourne les métadonnées du dernier upload sans charger les vecteurs.
+Returns metadata about the last upload without loading the embeddings.
 
 ```bash
 curl http://127.0.0.1:8000/store
 ```
 
-Réponse :
+Response:
 
 ```json
 {
@@ -108,13 +118,22 @@ Réponse :
 }
 ```
 
-## Variables d'environnement
+## Environment Variables
 
-| Variable             | Défaut                      | Description                              |
-|----------------------|-----------------------------|------------------------------------------|
-| `OLLAMA_BASE`        | `http://127.0.0.1:11434`    | URL du serveur Ollama                    |
-| `OLLAMA_EMBED_MODEL` | `nomic-embed-text`          | Modèle d'embeddings à utiliser           |
+| Variable                   | Default                  | Description                              |
+|----------------------------|--------------------------|------------------------------------------|
+| `OLLAMA_BASE`              | `http://127.0.0.1:11434` | Ollama server URL                        |
+| `OLLAMA_EMBED_MODEL`       | `nomic-embed-text`       | Embedding model to use                   |
+| `OLLAMA_GENERATION_MODEL`  | `mistral`                | Generation model to use for answers      |
 
-## Stockage
+## Storage
 
-Après chaque `POST /upload`, les chunks et leurs embeddings sont écrits dans `backend/store.json` (le fichier est écrasé à chaque nouvel upload — un seul document à la fois).
+After each `POST /upload`, chunks and embeddings are saved to `backend/store.json` (the file is overwritten with each new upload — one document at a time).
+
+## How it works
+
+1. **Upload**: PDF text is extracted and split into overlapping chunks with line number metadata
+2. **Embedding**: Each chunk is embedded using Ollama's `nomic-embed-text` model
+3. **Query**: Question is embedded and compared against stored chunks using cosine similarity
+4. **Generation**: Top-3 chunks are provided as context to Mistral, which generates an answer
+5. **Response**: Returns the question, retrieved chunks with scores/metadata, and the generated answer

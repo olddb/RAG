@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -109,7 +109,7 @@
             <!-- Header -->
             <div class="mb-12">
                 <h1 class="text-4xl font-bold text-white mb-2">RAG</h1>
-                <p class="text-gray-400">Retrieval-Augmented Generation avec Ollama</p>
+                <p class="text-gray-400">Retrieval-Augmented Generation with Ollama</p>
             </div>
             <!-- Main Grid -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -118,23 +118,23 @@
                     <!-- Step 1: Upload -->
                     <div class="flow-step active-step">
                         <div class="step-number">1</div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Upload du document</h3>
+                        <h3 class="text-lg font-semibold text-white mb-4">Upload Document</h3>
                         <div class="space-y-3">
                             <input 
                                 type="file" 
                                 accept=".pdf" 
                                 class="w-full text-gray-300 text-sm file:mr-4 file:py-2"
                             >
-                            <p class="text-xs text-gray-500">Format accepté: PDF • Taille max: 50 MB</p>
+                            <p class="text-xs text-gray-500">Format: PDF • Max size: 50 MB</p>
                             <button class="w-full py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:opacity-90 transition mt-2">
-                                Uploader
+                                Upload
                             </button>
                         </div>
                     </div>
                     <!-- Step 2: Embedding Info -->
                     <div class="flow-step">
                         <div class="step-number">2</div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Indexation</h3>
+                        <h3 class="text-lg font-semibold text-white mb-4">Indexing</h3>
                         <div class="space-y-3">
                             <div class="bg-gray-800/40 p-3 rounded-lg border border-gray-700/50">
                                 <p class="text-xs text-gray-400 mb-1">Document</p>
@@ -146,7 +146,7 @@
                                     <p class="text-xl text-purple-400 font-bold">42</p>
                                 </div>
                                 <div class="bg-gray-800/40 p-3 rounded-lg border border-gray-700/50">
-                                    <p class="text-xs text-gray-400 mb-1">Modèle</p>
+                                    <p class="text-xs text-gray-400 mb-1">Model</p>
                                     <p class="text-xs text-blue-400 font-mono">nomic-embed-text</p>
                                 </div>
                             </div>
@@ -155,10 +155,10 @@
                     <!-- Step 3: Top K Config -->
                     <div class="flow-step">
                         <div class="step-number">3</div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Résultats à afficher</h3>
+                        <h3 class="text-lg font-semibold text-white mb-4">Results to Display</h3>
                         <div class="space-y-3">
                             <label class="block">
-                                <p class="text-xs text-gray-400 mb-2">Nombre de chunks (top_k)</p>
+                                <p class="text-xs text-gray-400 mb-2">Number of chunks (top_k)</p>
                                 <div class="flex items-center gap-4">
                                     <input 
                                         type="range" 
@@ -170,7 +170,7 @@
                                     <span class="text-lg font-bold text-purple-400 w-8">3</span>
                                 </div>
                             </label>
-                            <p class="text-xs text-gray-500">Affichera les 3 meilleurs chunks en fonction de la similarité</p>
+                            <p class="text-xs text-gray-500">Will display the 3 best chunks by similarity score</p>
                         </div>
                     </div>
                 </div>
@@ -179,65 +179,65 @@
                     <!-- Step 4: Question Input -->
                     <div class="flow-step active-step">
                         <div class="step-number">4</div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Poser une question</h3>
+                        <h3 class="text-lg font-semibold text-white mb-4">Ask a Question</h3>
                         <div class="space-y-3">
                             <textarea 
-                                placeholder="Écris ta question ici... Ex: Qu'est-ce que c'est?" 
+                                placeholder="Type your question here... Ex: What is this about?" 
                                 rows="3"
                                 class="w-full bg-gray-800/40 border border-gray-700/50 rounded-lg p-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 resize-none"
                             ></textarea>
                             <button class="w-full py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:opacity-90 transition">
-                                Rechercher
+                                Search
                             </button>
                         </div>
                     </div>
                     <!-- Step 5: Retrieved Chunks -->
                     <div class="flow-step">
                         <div class="step-number">5</div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Chunks trouvés</h3>
+                        <h3 class="text-lg font-semibold text-white mb-4">Retrieved Chunks</h3>
                         <div class="space-y-2">
                             <!-- Chunk 1 -->
                             <div class="chunk-item">
                                 <div class="flex items-start justify-between mb-2">
                                     <div>
-                                        <p class="text-xs text-gray-400">document.pdf • Ligne 123-130</p>
+                                        <p class="text-xs text-gray-400">document.pdf • Lines 123-130</p>
                                         <p class="text-sm text-gray-300 mt-1 line-clamp-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
                                     </div>
                                     <span class="score-badge">91%</span>
                                 </div>
-                                <button class="text-xs text-purple-400 hover:text-purple-300 mt-2">▼ Déplier</button>
+                                <button class="text-xs text-purple-400 hover:text-purple-300 mt-2">▼ Expand</button>
                             </div>
                             <!-- Chunk 2 -->
                             <div class="chunk-item">
                                 <div class="flex items-start justify-between mb-2">
                                     <div>
-                                        <p class="text-xs text-gray-400">document.pdf • Ligne 256-263</p>
+                                        <p class="text-xs text-gray-400">document.pdf • Lines 256-263</p>
                                         <p class="text-sm text-gray-300 mt-1 line-clamp-2">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
                                     </div>
                                     <span class="score-badge">87%</span>
                                 </div>
-                                <button class="text-xs text-purple-400 hover:text-purple-300 mt-2">▼ Déplier</button>
+                                <button class="text-xs text-purple-400 hover:text-purple-300 mt-2">▼ Expand</button>
                             </div>
                             <!-- Chunk 3 -->
                             <div class="chunk-item">
                                 <div class="flex items-start justify-between mb-2">
                                     <div>
-                                        <p class="text-xs text-gray-400">document.pdf • Ligne 412-419</p>
+                                        <p class="text-xs text-gray-400">document.pdf • Lines 412-419</p>
                                         <p class="text-sm text-gray-300 mt-1 line-clamp-2">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
                                     </div>
                                     <span class="score-badge">83%</span>
                                 </div>
-                                <button class="text-xs text-purple-400 hover:text-purple-300 mt-2">▼ Déplier</button>
+                                <button class="text-xs text-purple-400 hover:text-purple-300 mt-2">▼ Expand</button>
                             </div>
                         </div>
                     </div>
                     <!-- Step 6: Answer -->
                     <div class="flow-step">
                         <div class="step-number">6</div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Réponse générée</h3>
+                        <h3 class="text-lg font-semibold text-white mb-4">Generated Answer</h3>
                         <div class="bg-gray-800/40 p-4 rounded-lg border border-purple-500/30">
                             <p class="text-sm text-gray-300 leading-relaxed">
-                                Sur la base des chunks les plus pertinents trouvés dans le document, voici la réponse : 
+                                Based on the most relevant chunks found in the document, here is the answer: 
                                 <span class="text-purple-300">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</span>
                             </p>
                         </div>
@@ -246,33 +246,33 @@
             </div>
             <!-- Process Flow Diagram -->
             <div class="mt-16 pt-12 border-t border-gray-700/30">
-                <h2 class="text-xl font-semibold text-white mb-8">Comment ça marche ?</h2>
+                <h2 class="text-xl font-semibold text-white mb-8">How it works</h2>
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div class="bg-gray-800/30 border border-gray-700/30 rounded-lg p-4">
-                        <p class="text-xs text-gray-400 font-mono mb-2">Étape 1</p>
-                        <p class="text-sm text-white">PDF → texte</p>
+                        <p class="text-xs text-gray-400 font-mono mb-2">Step 1</p>
+                        <p class="text-sm text-white">PDF → Text</p>
                     </div>
                     <div class="hidden md:flex items-center justify-center">
                         <p class="text-purple-400">→</p>
                     </div>
                     <div class="bg-gray-800/30 border border-gray-700/30 rounded-lg p-4">
-                        <p class="text-xs text-gray-400 font-mono mb-2">Étape 2</p>
+                        <p class="text-xs text-gray-400 font-mono mb-2">Step 2</p>
                         <p class="text-sm text-white">Chunks (500 chars)</p>
                     </div>
                     <div class="bg-gray-800/30 border border-gray-700/30 rounded-lg p-4">
-                        <p class="text-xs text-gray-400 font-mono mb-2">Étape 3</p>
+                        <p class="text-xs text-gray-400 font-mono mb-2">Step 3</p>
                         <p class="text-sm text-white">Embeddings (Ollama)</p>
                     </div>
                     <div class="hidden md:flex items-center justify-center">
                         <p class="text-purple-400">→</p>
                     </div>
                     <div class="bg-gray-800/30 border border-gray-700/30 rounded-lg p-4">
-                        <p class="text-xs text-gray-400 font-mono mb-2">Étape 4</p>
-                        <p class="text-sm text-white">Stockage (store.json)</p>
+                        <p class="text-xs text-gray-400 font-mono mb-2">Step 4</p>
+                        <p class="text-sm text-white">Storage (store.json)</p>
                     </div>
                 </div>
                 <div class="mt-4 text-center text-gray-400 text-sm">
-                    <p>Question → Embedding → Similarité cosinus → Top-k chunks</p>
+                    <p>Question → Embedding → Cosine similarity → Top-k chunks → Generate answer</p>
                 </div>
             </div>
         </div>
