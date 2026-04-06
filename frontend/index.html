@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG — Retrieval-Augmented Generation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+            min-height: 100vh;
+        }
+        
+        .gradient-border {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.5) 0%, rgba(59, 130, 246, 0.5) 100%);
+            padding: 1px;
+            border-radius: 12px;
+        }
+        
+        .gradient-border > * {
+            background: #111827;
+            border-radius: 11px;
+        }
+        
+        .flow-step {
+            position: relative;
+            padding: 20px;
+            background: rgba(17, 24, 39, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .flow-step:hover {
+            border-color: rgba(168, 85, 247, 0.6);
+            background: rgba(17, 24, 39, 0.95);
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        
+        .chunk-item {
+            background: rgba(30, 41, 59, 0.6);
+            border-left: 3px solid #a855f7;
+            padding: 12px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
+        }
+        
+        .chunk-item:hover {
+            background: rgba(30, 41, 59, 0.9);
+            border-left-color: #3b82f6;
+            transform: translateX(4px);
+        }
+        
+        .score-badge {
+            display: inline-block;
+            background: rgba(168, 85, 247, 0.2);
+            color: #d8b4fe;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .active-step {
+            border-color: #a855f7;
+            background: rgba(17, 24, 39, 1);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+        }
+        
+        input[type="file"]::file-selector-button {
+            background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        input[type="file"]::file-selector-button:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen p-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="mb-12">
+                <h1 class="text-4xl font-bold text-white mb-2">RAG</h1>
+                <p class="text-gray-400">Retrieval-Augmented Generation avec Ollama</p>
+            </div>
+            <!-- Main Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Left Column: Steps 1-3 -->
+                <div class="space-y-6">
+                    <!-- Step 1: Upload -->
+                    <div class="flow-step active-step">
+                        <div class="step-number">1</div>
+                        <h3 class="text-lg font-semibold text-white mb-4">Upload du document</h3>
+                        <div class="space-y-3">
+                            <input 
+                                type="file" 
+                                accept=".pdf" 
+                                class="w-full text-gray-300 text-sm file:mr-4 file:py-2"
+                            >
+                            <p class="text-xs text-gray-500">Format accepté: PDF • Taille max: 50 MB</p>
+                            <button class="w-full py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:opacity-90 transition mt-2">
+                                Uploader
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Step 2: Embedding Info -->
+                    <div class="flow-step">
+                        <div class="step-number">2</div>
+                        <h3 class="text-lg font-semibold text-white mb-4">Indexation</h3>
+                        <div class="space-y-3">
+                            <div class="bg-gray-800/40 p-3 rounded-lg border border-gray-700/50">
+                                <p class="text-xs text-gray-400 mb-1">Document</p>
+                                <p class="text-sm text-white font-medium">document.pdf</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-gray-800/40 p-3 rounded-lg border border-gray-700/50">
+                                    <p class="text-xs text-gray-400 mb-1">Chunks</p>
+                                    <p class="text-xl text-purple-400 font-bold">42</p>
+                                </div>
+                                <div class="bg-gray-800/40 p-3 rounded-lg border border-gray-700/50">
+                                    <p class="text-xs text-gray-400 mb-1">Modèle</p>
+                                    <p class="text-xs text-blue-400 font-mono">nomic-embed-text</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 3: Top K Config -->
+                    <div class="flow-step">
+                        <div class="step-number">3</div>
+                        <h3 class="text-lg font-semibold text-white mb-4">Résultats à afficher</h3>
+                        <div class="space-y-3">
+                            <label class="block">
+                                <p class="text-xs text-gray-400 mb-2">Nombre de chunks (top_k)</p>
+                                <div class="flex items-center gap-4">
+                                    <input 
+                                        type="range" 
+                                        min="1" 
+                                        max="10" 
+                                        value="3" 
+                                        class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                                    >
+                                    <span class="text-lg font-bold text-purple-400 w-8">3</span>
+                                </div>
+                            </label>
+                            <p class="text-xs text-gray-500">Affichera les 3 meilleurs chunks en fonction de la similarité</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Right Column: Steps 4-6 -->
+                <div class="space-y-6">
+                    <!-- Step 4: Question Input -->
+                    <div class="flow-step active-step">
+                        <div class="step-number">4</div>
+                        <h3 class="text-lg font-semibold text-white mb-4">Poser une question</h3>
+                        <div class="space-y-3">
+                            <textarea 
+                                placeholder="Écris ta question ici... Ex: Qu'est-ce que c'est?" 
+                                rows="3"
+                                class="w-full bg-gray-800/40 border border-gray-700/50 rounded-lg p-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 resize-none"
+                            ></textarea>
+                            <button class="w-full py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:opacity-90 transition">
+                                Rechercher
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Step 5: Retrieved Chunks -->
+                    <div class="flow-step">
+                        <div class="step-number">5</div>
+                        <h3 class="text-lg font-semibold text-white mb-4">Chunks trouvés</h3>
+                        <div class="space-y-2">
+                            <!-- Chunk 1 -->
+                            <div class="chunk-item">
+                                <div class="flex items-start justify-between mb-2">
+                                    <div>
+                                        <p class="text-xs text-gray-400">document.pdf • Ligne 123-130</p>
+                                        <p class="text-sm text-gray-300 mt-1 line-clamp-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                                    </div>
+                                    <span class="score-badge">91%</span>
+                                </div>
+                                <button class="text-xs text-purple-400 hover:text-purple-300 mt-2">▼ Déplier</button>
+                            </div>
+                            <!-- Chunk 2 -->
+                            <div class="chunk-item">
+                                <div class="flex items-start justify-between mb-2">
+                                    <div>
+                                        <p class="text-xs text-gray-400">document.pdf • Ligne 256-263</p>
+                                        <p class="text-sm text-gray-300 mt-1 line-clamp-2">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                                    </div>
+                                    <span class="score-badge">87%</span>
+                                </div>
+                                <button class="text-xs text-purple-400 hover:text-purple-300 mt-2">▼ Déplier</button>
+                            </div>
+                            <!-- Chunk 3 -->
+                            <div class="chunk-item">
+                                <div class="flex items-start justify-between mb-2">
+                                    <div>
+                                        <p class="text-xs text-gray-400">document.pdf • Ligne 412-419</p>
+                                        <p class="text-sm text-gray-300 mt-1 line-clamp-2">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+                                    </div>
+                                    <span class="score-badge">83%</span>
+                                </div>
+                                <button class="text-xs text-purple-400 hover:text-purple-300 mt-2">▼ Déplier</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 6: Answer -->
+                    <div class="flow-step">
+                        <div class="step-number">6</div>
+                        <h3 class="text-lg font-semibold text-white mb-4">Réponse générée</h3>
+                        <div class="bg-gray-800/40 p-4 rounded-lg border border-purple-500/30">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                Sur la base des chunks les plus pertinents trouvés dans le document, voici la réponse : 
+                                <span class="text-purple-300">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Process Flow Diagram -->
+            <div class="mt-16 pt-12 border-t border-gray-700/30">
+                <h2 class="text-xl font-semibold text-white mb-8">Comment ça marche ?</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="bg-gray-800/30 border border-gray-700/30 rounded-lg p-4">
+                        <p class="text-xs text-gray-400 font-mono mb-2">Étape 1</p>
+                        <p class="text-sm text-white">PDF → texte</p>
+                    </div>
+                    <div class="hidden md:flex items-center justify-center">
+                        <p class="text-purple-400">→</p>
+                    </div>
+                    <div class="bg-gray-800/30 border border-gray-700/30 rounded-lg p-4">
+                        <p class="text-xs text-gray-400 font-mono mb-2">Étape 2</p>
+                        <p class="text-sm text-white">Chunks (500 chars)</p>
+                    </div>
+                    <div class="bg-gray-800/30 border border-gray-700/30 rounded-lg p-4">
+                        <p class="text-xs text-gray-400 font-mono mb-2">Étape 3</p>
+                        <p class="text-sm text-white">Embeddings (Ollama)</p>
+                    </div>
+                    <div class="hidden md:flex items-center justify-center">
+                        <p class="text-purple-400">→</p>
+                    </div>
+                    <div class="bg-gray-800/30 border border-gray-700/30 rounded-lg p-4">
+                        <p class="text-xs text-gray-400 font-mono mb-2">Étape 4</p>
+                        <p class="text-sm text-white">Stockage (store.json)</p>
+                    </div>
+                </div>
+                <div class="mt-4 text-center text-gray-400 text-sm">
+                    <p>Question → Embedding → Similarité cosinus → Top-k chunks</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
