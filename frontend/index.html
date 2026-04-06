@@ -7,40 +7,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
+
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
             min-height: 100vh;
         }
-        
-        .gradient-border {
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.5) 0%, rgba(59, 130, 246, 0.5) 100%);
-            padding: 1px;
-            border-radius: 12px;
-        }
-        
-        .gradient-border > * {
-            background: #111827;
-            border-radius: 11px;
-        }
-        
+
         .flow-step {
-            position: relative;
             padding: 20px;
             background: rgba(17, 24, 39, 0.8);
             border: 1px solid rgba(139, 92, 246, 0.3);
             border-radius: 12px;
             transition: all 0.3s ease;
         }
-        
+
         .flow-step:hover {
-            border-color: rgba(168, 85, 247, 0.6);
-            background: rgba(17, 24, 39, 0.95);
+            border-color: rgba(168, 85, 247, 0.5);
         }
-        
+
         .step-number {
-            display: inline-block;
             width: 32px;
             height: 32px;
             background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
@@ -52,40 +38,77 @@
             font-weight: 700;
             font-size: 14px;
             margin-bottom: 12px;
+            flex-shrink: 0;
         }
-        
+
+        .step-active {
+            border-color: rgba(168, 85, 247, 0.7);
+            box-shadow: 0 0 24px rgba(168, 85, 247, 0.15);
+        }
+
+        .step-done {
+            border-color: rgba(34, 197, 94, 0.5);
+            box-shadow: 0 0 16px rgba(34, 197, 94, 0.08);
+        }
+
+        .step-number.done {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        }
+
         .chunk-item {
-            background: rgba(30, 41, 59, 0.6);
-            border-left: 3px solid #a855f7;
-            padding: 12px 16px;
+            background: rgba(30, 41, 59, 0.5);
+            border-left: 3px solid rgba(168, 85, 247, 0.6);
             border-radius: 6px;
-            cursor: pointer;
+            overflow: hidden;
             transition: all 0.2s ease;
             margin-bottom: 8px;
         }
-        
-        .chunk-item:hover {
-            background: rgba(30, 41, 59, 0.9);
-            border-left-color: #3b82f6;
-            transform: translateX(4px);
+
+        .chunk-header {
+            padding: 10px 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
         }
-        
+
+        .chunk-header:hover {
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        .chunk-body {
+            display: none;
+            padding: 0 14px 12px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .chunk-body.open {
+            display: block;
+        }
+
         .score-badge {
-            display: inline-block;
             background: rgba(168, 85, 247, 0.2);
             color: #d8b4fe;
-            padding: 4px 8px;
+            padding: 3px 8px;
             border-radius: 4px;
             font-size: 12px;
             font-weight: 600;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
-        
-        .active-step {
-            border-color: #a855f7;
-            background: rgba(17, 24, 39, 1);
-            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+
+        .chevron {
+            color: #a855f7;
+            font-size: 10px;
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
         }
-        
+
+        .chevron.open {
+            transform: rotate(180deg);
+        }
+
         input[type="file"]::file-selector-button {
             background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
             color: white;
@@ -94,188 +117,501 @@
             border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.3s;
+            transition: opacity 0.2s;
         }
-        
-        input[type="file"]::file-selector-button:hover {
-            opacity: 0.9;
-            transform: scale(1.05);
+
+        input[type="file"]::file-selector-button:hover { opacity: 0.85; }
+
+        input[type="range"] {
+            accent-color: #a855f7;
         }
+
+        /* Loading dots animation */
+        @keyframes blink {
+            0%, 80%, 100% { opacity: 0; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1); }
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #a855f7;
+            border-radius: 50%;
+            animation: blink 1.4s infinite ease-in-out;
+        }
+
+        .dot:nth-child(2) { animation-delay: 0.2s; background: #8b5cf6; }
+        .dot:nth-child(3) { animation-delay: 0.4s; background: #3b82f6; }
+
+        /* Shimmer for uploading */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .shimmer {
+            background: linear-gradient(90deg, rgba(168,85,247,0.1) 25%, rgba(168,85,247,0.3) 50%, rgba(168,85,247,0.1) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        /* Typing cursor for answer */
+        @keyframes cursor-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .typing-cursor::after {
+            content: '▋';
+            color: #a855f7;
+            animation: cursor-blink 1s infinite;
+            margin-left: 2px;
+        }
+
+        /* Progress bar for upload */
+        @keyframes progress-indeterminate {
+            0% { left: -35%; right: 100%; }
+            60% { left: 100%; right: -90%; }
+            100% { left: 100%; right: -90%; }
+        }
+
+        .progress-bar {
+            position: relative;
+            height: 3px;
+            background: rgba(168, 85, 247, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #a855f7, #3b82f6);
+            border-radius: 2px;
+            animation: progress-indeterminate 2s infinite ease-in-out;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+            color: white;
+            padding: 9px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: opacity 0.2s, transform 0.1s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+        .btn-primary:active:not(:disabled) { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        textarea:focus { outline: none; }
     </style>
 </head>
 <body>
-    <div class="min-h-screen p-8">
+    <div class="min-h-screen p-6 md:p-10">
         <div class="max-w-6xl mx-auto">
+
             <!-- Header -->
-            <div class="mb-12">
-                <h1 class="text-4xl font-bold text-white mb-2">RAG</h1>
-                <p class="text-gray-400">Retrieval-Augmented Generation with Ollama</p>
-            </div>
-            <!-- Main Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Left Column: Steps 1-3 -->
-                <div class="space-y-6">
-                    <!-- Step 1: Upload -->
-                    <div class="flow-step active-step">
-                        <div class="step-number">1</div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Upload Document</h3>
-                        <div class="space-y-3">
-                            <input 
-                                type="file" 
-                                accept=".pdf" 
-                                class="w-full text-gray-300 text-sm file:mr-4 file:py-2"
-                            >
-                            <p class="text-xs text-gray-500">Format: PDF • Max size: 50 MB</p>
-                            <button class="w-full py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:opacity-90 transition mt-2">
-                                Upload
-                            </button>
-                        </div>
-                    </div>
-                    <!-- Step 2: Embedding Info -->
-                    <div class="flow-step">
-                        <div class="step-number">2</div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Indexing</h3>
-                        <div class="space-y-3">
-                            <div class="bg-gray-800/40 p-3 rounded-lg border border-gray-700/50">
-                                <p class="text-xs text-gray-400 mb-1">Document</p>
-                                <p class="text-sm text-white font-medium">document.pdf</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="bg-gray-800/40 p-3 rounded-lg border border-gray-700/50">
-                                    <p class="text-xs text-gray-400 mb-1">Chunks</p>
-                                    <p class="text-xl text-purple-400 font-bold">42</p>
-                                </div>
-                                <div class="bg-gray-800/40 p-3 rounded-lg border border-gray-700/50">
-                                    <p class="text-xs text-gray-400 mb-1">Model</p>
-                                    <p class="text-xs text-blue-400 font-mono">nomic-embed-text</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Step 3: Top K Config -->
-                    <div class="flow-step">
-                        <div class="step-number">3</div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Results to Display</h3>
-                        <div class="space-y-3">
-                            <label class="block">
-                                <p class="text-xs text-gray-400 mb-2">Number of chunks (top_k)</p>
-                                <div class="flex items-center gap-4">
-                                    <input 
-                                        type="range" 
-                                        min="1" 
-                                        max="10" 
-                                        value="3" 
-                                        class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                                    >
-                                    <span class="text-lg font-bold text-purple-400 w-8">3</span>
-                                </div>
-                            </label>
-                            <p class="text-xs text-gray-500">Will display the 3 best chunks by similarity score</p>
-                        </div>
-                    </div>
+            <div class="mb-10">
+                <div class="flex items-center gap-3 mb-1">
+                    <h1 class="text-3xl font-bold text-white tracking-tight">RAG</h1>
+                    <span id="api-status" class="text-xs px-2 py-1 rounded-full font-medium bg-gray-800 text-gray-500">connecting...</span>
                 </div>
-                <!-- Right Column: Steps 4-6 -->
-                <div class="space-y-6">
-                    <!-- Step 4: Question Input -->
-                    <div class="flow-step active-step">
-                        <div class="step-number">4</div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Ask a Question</h3>
+                <p class="text-gray-500 text-sm">Retrieval-Augmented Generation with Ollama — local, no cloud</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <!-- ───── LEFT COLUMN ───── -->
+                <div class="space-y-5">
+
+                    <!-- Step 1 — Upload -->
+                    <div class="flow-step step-active" id="step-upload">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="step-number" id="num-1">1</div>
+                            <h3 class="text-base font-semibold text-white">Upload Document</h3>
+                        </div>
                         <div class="space-y-3">
-                            <textarea 
-                                placeholder="Type your question here... Ex: What is this about?" 
-                                rows="3"
-                                class="w-full bg-gray-800/40 border border-gray-700/50 rounded-lg p-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 resize-none"
-                            ></textarea>
-                            <button class="w-full py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:opacity-90 transition">
-                                Search
-                            </button>
+                            <input id="file-input" type="file" accept=".pdf" class="w-full text-gray-400 text-sm">
+                            <p class="text-xs text-gray-600">PDF only • The document will be chunked and embedded locally</p>
+                            <button id="btn-upload" class="btn-primary w-full" disabled>Upload & Index</button>
+                            <div id="upload-progress" class="hidden progress-bar mt-1"></div>
+                            <div id="upload-error" class="hidden text-xs text-red-400 bg-red-950/30 border border-red-800/30 rounded-lg p-2"></div>
                         </div>
                     </div>
-                    <!-- Step 5: Retrieved Chunks -->
-                    <div class="flow-step">
-                        <div class="step-number">5</div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Retrieved Chunks</h3>
+
+                    <!-- Step 2 — Indexing info -->
+                    <div class="flow-step" id="step-index">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="step-number" id="num-2">2</div>
+                            <h3 class="text-base font-semibold text-white">Indexing</h3>
+                        </div>
+                        <div id="index-empty" class="text-xs text-gray-600">Upload a PDF to see indexing info.</div>
+                        <div id="index-data" class="hidden space-y-3">
+                            <div class="bg-gray-800/40 p-3 rounded-lg border border-gray-700/40">
+                                <p class="text-xs text-gray-500 mb-1">Document</p>
+                                <p id="idx-filename" class="text-sm text-white font-medium truncate">—</p>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="bg-gray-800/40 p-3 rounded-lg border border-gray-700/40">
+                                    <p class="text-xs text-gray-500 mb-1">Chunks</p>
+                                    <p id="idx-chunks" class="text-xl text-purple-400 font-bold">—</p>
+                                </div>
+                                <div class="bg-gray-800/40 p-3 rounded-lg border border-gray-700/40 col-span-2">
+                                    <p class="text-xs text-gray-500 mb-1">Embed model</p>
+                                    <p id="idx-model" class="text-xs text-blue-400 font-mono truncate">—</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 — Top K -->
+                    <div class="flow-step" id="step-topk">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="step-number" id="num-3">3</div>
+                            <h3 class="text-base font-semibold text-white">Retrieval Settings</h3>
+                        </div>
                         <div class="space-y-2">
-                            <!-- Chunk 1 -->
-                            <div class="chunk-item">
-                                <div class="flex items-start justify-between mb-2">
-                                    <div>
-                                        <p class="text-xs text-gray-400">document.pdf • Lines 123-130</p>
-                                        <p class="text-sm text-gray-300 mt-1 line-clamp-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                                    </div>
-                                    <span class="score-badge">91%</span>
-                                </div>
-                                <button class="text-xs text-purple-400 hover:text-purple-300 mt-2">▼ Expand</button>
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-gray-400">Chunks to retrieve <span class="text-gray-600">(top_k)</span></p>
+                                <span id="topk-value" class="text-base font-bold text-purple-400">3</span>
                             </div>
-                            <!-- Chunk 2 -->
-                            <div class="chunk-item">
-                                <div class="flex items-start justify-between mb-2">
-                                    <div>
-                                        <p class="text-xs text-gray-400">document.pdf • Lines 256-263</p>
-                                        <p class="text-sm text-gray-300 mt-1 line-clamp-2">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-                                    </div>
-                                    <span class="score-badge">87%</span>
-                                </div>
-                                <button class="text-xs text-purple-400 hover:text-purple-300 mt-2">▼ Expand</button>
-                            </div>
-                            <!-- Chunk 3 -->
-                            <div class="chunk-item">
-                                <div class="flex items-start justify-between mb-2">
-                                    <div>
-                                        <p class="text-xs text-gray-400">document.pdf • Lines 412-419</p>
-                                        <p class="text-sm text-gray-300 mt-1 line-clamp-2">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
-                                    </div>
-                                    <span class="score-badge">83%</span>
-                                </div>
-                                <button class="text-xs text-purple-400 hover:text-purple-300 mt-2">▼ Expand</button>
-                            </div>
+                            <input id="topk-slider" type="range" min="1" max="10" value="3" class="w-full h-2 rounded-lg">
+                            <p class="text-xs text-gray-600">Higher = more context for the model, but slower retrieval</p>
                         </div>
                     </div>
-                    <!-- Step 6: Answer -->
-                    <div class="flow-step">
-                        <div class="step-number">6</div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Generated Answer</h3>
-                        <div class="bg-gray-800/40 p-4 rounded-lg border border-purple-500/30">
-                            <p class="text-sm text-gray-300 leading-relaxed">
-                                Based on the most relevant chunks found in the document, here is the answer: 
-                                <span class="text-purple-300">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</span>
-                            </p>
+
+                </div>
+
+                <!-- ───── RIGHT COLUMN ───── -->
+                <div class="space-y-5">
+
+                    <!-- Step 4 — Question -->
+                    <div class="flow-step step-active" id="step-question">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="step-number" id="num-4">4</div>
+                            <h3 class="text-base font-semibold text-white">Ask a Question</h3>
+                        </div>
+                        <div class="space-y-3">
+                            <textarea
+                                id="question-input"
+                                placeholder="Type your question... e.g. What is the main topic?"
+                                rows="3"
+                                class="w-full bg-gray-800/40 border border-gray-700/50 rounded-lg p-3 text-white text-sm placeholder-gray-600 focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 resize-none transition"
+                            ></textarea>
+                            <button id="btn-search" class="btn-primary w-full" disabled>Search & Generate</button>
+                            <div id="search-error" class="hidden text-xs text-red-400 bg-red-950/30 border border-red-800/30 rounded-lg p-2"></div>
                         </div>
                     </div>
+
+                    <!-- Step 5 — Retrieved Chunks -->
+                    <div class="flow-step" id="step-chunks">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="step-number" id="num-5">5</div>
+                            <h3 class="text-base font-semibold text-white">Retrieved Chunks</h3>
+                        </div>
+                        <div id="chunks-empty" class="text-xs text-gray-600">Ask a question to see retrieved chunks.</div>
+                        <div id="chunks-loading" class="hidden flex items-center gap-2 py-2">
+                            <div class="flex gap-1">
+                                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                            </div>
+                            <span class="text-xs text-gray-500">Retrieving chunks...</span>
+                        </div>
+                        <div id="chunks-list" class="hidden space-y-2"></div>
+                    </div>
+
+                    <!-- Step 6 — Answer -->
+                    <div class="flow-step" id="step-answer">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="step-number" id="num-6">6</div>
+                            <h3 class="text-base font-semibold text-white">Generated Answer</h3>
+                        </div>
+                        <div id="answer-empty" class="text-xs text-gray-600">The answer will appear here after your query.</div>
+
+                        <!-- Loading state -->
+                        <div id="answer-loading" class="hidden">
+                            <div class="bg-gray-800/30 border border-purple-500/20 rounded-lg p-4">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="flex gap-1">
+                                        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                                    </div>
+                                    <span class="text-xs text-gray-500">Mistral is generating the answer...</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-3 shimmer rounded"></div>
+                                    <div class="h-3 shimmer rounded w-4/5"></div>
+                                    <div class="h-3 shimmer rounded w-3/5"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Answer content -->
+                        <div id="answer-content" class="hidden bg-gray-800/30 border border-purple-500/25 rounded-lg p-4">
+                            <p id="answer-text" class="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap"></p>
+                        </div>
+                    </div>
+
                 </div>
             </div>
-            <!-- Process Flow Diagram -->
-            <div class="mt-16 pt-12 border-t border-gray-700/30">
-                <h2 class="text-xl font-semibold text-white mb-8">How it works</h2>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div class="bg-gray-800/30 border border-gray-700/30 rounded-lg p-4">
-                        <p class="text-xs text-gray-400 font-mono mb-2">Step 1</p>
-                        <p class="text-sm text-white">PDF → Text</p>
-                    </div>
-                    <div class="hidden md:flex items-center justify-center">
-                        <p class="text-purple-400">→</p>
-                    </div>
-                    <div class="bg-gray-800/30 border border-gray-700/30 rounded-lg p-4">
-                        <p class="text-xs text-gray-400 font-mono mb-2">Step 2</p>
-                        <p class="text-sm text-white">Chunks (500 chars)</p>
-                    </div>
-                    <div class="bg-gray-800/30 border border-gray-700/30 rounded-lg p-4">
-                        <p class="text-xs text-gray-400 font-mono mb-2">Step 3</p>
-                        <p class="text-sm text-white">Embeddings (Ollama)</p>
-                    </div>
-                    <div class="hidden md:flex items-center justify-center">
-                        <p class="text-purple-400">→</p>
-                    </div>
-                    <div class="bg-gray-800/30 border border-gray-700/30 rounded-lg p-4">
-                        <p class="text-xs text-gray-400 font-mono mb-2">Step 4</p>
-                        <p class="text-sm text-white">Storage (store.json)</p>
-                    </div>
-                </div>
-                <div class="mt-4 text-center text-gray-400 text-sm">
-                    <p>Question → Embedding → Cosine similarity → Top-k chunks → Generate answer</p>
+
+            <!-- Flow diagram -->
+            <div class="mt-14 pt-10 border-t border-gray-800/60">
+                <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-6">How it works</h2>
+                <div class="flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                    <span class="bg-gray-800/50 px-3 py-1 rounded-full text-gray-400">PDF → Text</span>
+                    <span class="text-purple-700">→</span>
+                    <span class="bg-gray-800/50 px-3 py-1 rounded-full text-gray-400">Chunks (500 chars)</span>
+                    <span class="text-purple-700">→</span>
+                    <span class="bg-gray-800/50 px-3 py-1 rounded-full text-gray-400">Embeddings (nomic-embed-text)</span>
+                    <span class="text-purple-700">→</span>
+                    <span class="bg-gray-800/50 px-3 py-1 rounded-full text-gray-400">Cosine similarity</span>
+                    <span class="text-purple-700">→</span>
+                    <span class="bg-gray-800/50 px-3 py-1 rounded-full text-gray-400">Top-k chunks</span>
+                    <span class="text-purple-700">→</span>
+                    <span class="bg-gray-800/50 px-3 py-1 rounded-full text-gray-400">Mistral answer</span>
                 </div>
             </div>
+
         </div>
     </div>
+
+    <script>
+        const API = "http://127.0.0.1:8000"
+
+        // ─── DOM refs ───────────────────────────────────────────────────────────
+        const fileInput      = document.getElementById("file-input")
+        const btnUpload      = document.getElementById("btn-upload")
+        const uploadProgress = document.getElementById("upload-progress")
+        const uploadError    = document.getElementById("upload-error")
+
+        const questionInput  = document.getElementById("question-input")
+        const btnSearch      = document.getElementById("btn-search")
+        const searchError    = document.getElementById("search-error")
+
+        const topkSlider     = document.getElementById("topk-slider")
+        const topkValue      = document.getElementById("topk-value")
+
+        const apiStatus      = document.getElementById("api-status")
+
+        // ─── API status check ───────────────────────────────────────────────────
+        async function checkApi() {
+            try {
+                const res = await fetch(`${API}/store`)
+                if (res.ok) {
+                    apiStatus.textContent = "API online"
+                    apiStatus.className = "text-xs px-2 py-1 rounded-full font-medium bg-green-950/50 text-green-400 border border-green-800/30"
+                    const data = await res.json()
+                    if (data.exists) populateIndexInfo(data)
+                }
+            } catch {
+                apiStatus.textContent = "API offline"
+                apiStatus.className = "text-xs px-2 py-1 rounded-full font-medium bg-red-950/50 text-red-400 border border-red-800/30"
+            }
+        }
+
+        // ─── Top K slider ───────────────────────────────────────────────────────
+        topkSlider.addEventListener("input", () => {
+            topkValue.textContent = topkSlider.value
+        })
+
+        // ─── File input ─────────────────────────────────────────────────────────
+        fileInput.addEventListener("change", () => {
+            btnUpload.disabled = !fileInput.files.length
+            hideError(uploadError)
+        })
+
+        // ─── Upload ─────────────────────────────────────────────────────────────
+        btnUpload.addEventListener("click", async () => {
+            if (!fileInput.files.length) return
+
+            const file = fileInput.files[0]
+            const formData = new FormData()
+            formData.append("file", file)
+
+            setUploading(true)
+            hideError(uploadError)
+
+            try {
+                const res = await fetch(`${API}/upload`, { method: "POST", body: formData })
+                const data = await res.json()
+
+                if (!res.ok) throw new Error(data.detail || "Upload failed")
+
+                populateIndexInfo({
+                    source_filename: data.filename,
+                    chunk_count: data.chunk_count,
+                    embedding_model: data.embedding_model,
+                })
+                markDone("num-1", "step-upload")
+                btnSearch.disabled = false
+
+            } catch (err) {
+                showError(uploadError, err.message)
+            } finally {
+                setUploading(false)
+            }
+        })
+
+        function setUploading(on) {
+            btnUpload.disabled = on
+            uploadProgress.classList.toggle("hidden", !on)
+            btnUpload.textContent = on ? "Indexing..." : "Upload & Index"
+        }
+
+        function populateIndexInfo(data) {
+            document.getElementById("idx-filename").textContent = data.source_filename || "—"
+            document.getElementById("idx-chunks").textContent   = data.chunk_count ?? "—"
+            document.getElementById("idx-model").textContent    = data.embedding_model || "—"
+            document.getElementById("index-empty").classList.add("hidden")
+            document.getElementById("index-data").classList.remove("hidden")
+            markDone("num-2", "step-index")
+            btnSearch.disabled = false
+        }
+
+        // ─── Search ─────────────────────────────────────────────────────────────
+        btnSearch.addEventListener("click", runQuery)
+
+        questionInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) runQuery()
+        })
+
+        async function runQuery() {
+            const question = questionInput.value.trim()
+            if (!question) return
+
+            hideError(searchError)
+            setSearching(true)
+            clearResults()
+
+            try {
+                const res = await fetch(`${API}/query`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question, top_k: parseInt(topkSlider.value) }),
+                })
+                const data = await res.json()
+                if (!res.ok || data.error) throw new Error(data.error || "Query failed")
+
+                renderChunks(data.retrieved, data.source_filename)
+                renderAnswer(data.answer)
+                markDone("num-4", "step-question")
+
+            } catch (err) {
+                showError(searchError, err.message)
+                clearResults()
+            } finally {
+                setSearching(false)
+            }
+        }
+
+        function setSearching(on) {
+            btnSearch.disabled = on
+            btnSearch.textContent = on ? "Searching..." : "Search & Generate"
+            document.getElementById("chunks-loading").classList.toggle("hidden", !on)
+            document.getElementById("answer-loading").classList.toggle("hidden", !on)
+            document.getElementById("chunks-empty").classList.toggle("hidden", on)
+            document.getElementById("answer-empty").classList.toggle("hidden", on)
+        }
+
+        function clearResults() {
+            document.getElementById("chunks-list").classList.add("hidden")
+            document.getElementById("chunks-list").innerHTML = ""
+            document.getElementById("answer-content").classList.add("hidden")
+            document.getElementById("answer-text").textContent = ""
+        }
+
+        // ─── Render chunks ───────────────────────────────────────────────────────
+        function renderChunks(chunks, filename) {
+            document.getElementById("chunks-loading").classList.add("hidden")
+            const list = document.getElementById("chunks-list")
+            list.innerHTML = ""
+
+            if (!chunks.length) {
+                document.getElementById("chunks-empty").classList.remove("hidden")
+                document.getElementById("chunks-empty").textContent = "No relevant chunks found."
+                return
+            }
+
+            chunks.forEach((chunk, i) => {
+                const scorePercent = Math.round(chunk.score * 100)
+                const src = chunk.source_filename || filename || "document"
+                const lines = `Lines ${chunk.line_start}–${chunk.line_end}`
+                const preview = chunk.text.slice(0, 120).trim() + (chunk.text.length > 120 ? "..." : "")
+
+                const el = document.createElement("div")
+                el.className = "chunk-item"
+                el.innerHTML = `
+                    <div class="chunk-header" onclick="toggleChunk(this)">
+                        <div class="min-w-0">
+                            <p class="text-xs text-gray-500 truncate">${src} • ${lines}</p>
+                            <p class="text-xs text-gray-400 mt-1 line-clamp-2">${escapeHtml(preview)}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="score-badge">${scorePercent}%</span>
+                            <span class="chevron">▼</span>
+                        </div>
+                    </div>
+                    <div class="chunk-body">
+                        <p class="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap pt-3">${escapeHtml(chunk.text)}</p>
+                    </div>
+                `
+                list.appendChild(el)
+            })
+
+            list.classList.remove("hidden")
+            markDone("num-5", "step-chunks")
+        }
+
+        function toggleChunk(header) {
+            const body    = header.nextElementSibling
+            const chevron = header.querySelector(".chevron")
+            body.classList.toggle("open")
+            chevron.classList.toggle("open")
+        }
+
+        // ─── Render answer ───────────────────────────────────────────────────────
+        function renderAnswer(text) {
+            document.getElementById("answer-loading").classList.add("hidden")
+            const content = document.getElementById("answer-content")
+            const p = document.getElementById("answer-text")
+            p.textContent = text
+            content.classList.remove("hidden")
+            markDone("num-6", "step-answer")
+        }
+
+        // ─── Helpers ─────────────────────────────────────────────────────────────
+        function markDone(numId, stepId) {
+            const num  = document.getElementById(numId)
+            const step = document.getElementById(stepId)
+            num.classList.add("done")
+            step.classList.remove("step-active")
+            step.classList.add("step-done")
+        }
+
+        function showError(el, msg) {
+            el.textContent = msg
+            el.classList.remove("hidden")
+        }
+
+        function hideError(el) {
+            el.classList.add("hidden")
+            el.textContent = ""
+        }
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+        }
+
+        // ─── Init ─────────────────────────────────────────────────────────────────
+        checkApi()
+    </script>
 </body>
 </html>

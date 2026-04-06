@@ -2,6 +2,7 @@ import io
 
 from pypdf import PdfReader
 from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from embeddings import EMBED_MODEL, embed
@@ -10,6 +11,13 @@ from store import STORE_PATH, load_store, save_chunks
 from generation import generate_answer
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Upload files
 
@@ -87,6 +95,7 @@ async def store_info():
 
 class QueryBody(BaseModel):
     question: str
+    top_k: int = 3
 
 
 @app.post("/query")
@@ -95,7 +104,7 @@ async def query(body: QueryBody):
     if data is None:
         return {"error": "No data stored"}
     query_vec = await embed(body.question)
-    top = get_top_k(query_vec, data["chunks"], k=3)
+    top = get_top_k(query_vec, data["chunks"], k=body.top_k)
     retrieved = [{
         "score": score,
         "text": chunk["text"],
